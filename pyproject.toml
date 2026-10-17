@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "siem-luz-brute-force"
+version = "0.1.0"
+description = "SIEM leve com detecção de brute force em logs de autenticação"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flask>=3.0,<4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+siem-luz = "siem_luz.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.17.1",
+]
