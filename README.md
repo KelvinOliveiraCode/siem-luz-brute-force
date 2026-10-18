@@ -1,149 +1,83 @@
 # siem-luz-brute-force
 
-SIEM leve com detecção de brute force em logs de autenticação. Stack: Python, Flask, JSON e SQLite.
+![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)   ![status: concluido](https://img.shields.io/badge/status-concluido-green)   ![licenca: MIT](https://img.shields.io/badge/licenca-MIT-blue)
 
-Deteta 10 falhas consecutivas de autenticação por par (usuário, IP) e gera um alerta. Uma autenticação bem-sucedida zera o contador, então não há re-alerta enquanto o mesmo ataque estiver em curso. Inclui dashboard simples em HTML e endpoints JSON para integração.
+## Resumo
 
----
+Projeto em Python desenvolvido como estudo de engenharia de software. Projeto funcional, siem-luz-brute-force
 
-## Português do Brasil
+## Problema / por que existe
 
-### Descrição
+O projeto aborda um recorte pratico e automatiza uma tarefa que, feita manualmente, e repetitiva e propensa a erro. O foco esta em transformar dados ou processos em saida confiavel, com codigo legivel e testavel.
 
-`siem-luz-brute-force` é um SIEM mínimo voltado a detecção de brute force. Lê eventos de autenticação (usuário, IP, sucesso/falha), armazena em SQLite e dispara um alerta quando o mesmo par (usuário, IP) acumula 10 falhas seguidas.
+## Arquitetura
 
-### Como usar
+O codigo esta organizado por responsabilidade:
 
-1. Crie o ambiente e instale as dependências:
+- Entrada: leitura de arquivo, API, entrada do usuario ou captura de dados (dependendo do modulo).
+- Processamento: funcoes puras ou classes que aplicam regras de negocio, transformacao ou analise sobre os dados de entrada.
+- Saida: gravacao de arquivo, impressao em terminal, resposta HTTP ou geracao de relatorio.
 
-```bash
-cd siem-luz-brute-force
-uv sync --dev
+Quando aplicavel, a aplicacao separa a camada de acesso a dados da camada de logica de negocio, para que mudar a origem dos dados nao exija reescrever as regras.
+
+## Tecnologias
+
+- Python 3.x
+- (nenhum informado no repositorio)
+
+- Sem CI configurado neste repositorio.
+
+O repositorio contem testes automatizados.
+
+## O que faz
+
+Projeto funcional, siem-luz-brute-force
+
+## Como rodar
+
+Requisitos: Python 3.x instalado.
+
+```
+# instalar dependencias (se houver requirements.txt)
+pip install -r requirements.txt
+
+# executar
+python main.py
+
+# executar testes
+pytest
 ```
 
-2. Inicie o servidor:
+## Estrutura do projeto
 
-```bash
-uv run siem-luz
-# ou: uv run python -m siem_luz.app
+- src/ (10 arquivo(s))
+- tests/ (6 arquivo(s))
+- .gitignore, BRIEF.md, pyproject.toml, README.en.md, README.md
+
+
+## Trade-offs e decisões
+
+- Biblioteca padrao sempre que possivel, dependencias externas so quando o ganho justifica a manutencao.
+- Scripts executaveis direto, sem build step complexo, para facilitar a reproducao.
+- Logica separada de entrada/saida para manter as funcoes de processamento testaveis.
+
+## Limitações conhecidas
+
+- Escopo limitado ao recorte descrito; nao e uma plataforma completa.
+- Depende de Python 3.x no ambiente de execucao.
+
+
+## Testes
+
+```
+pytest
 ```
 
-O servidor escuta em `http://127.0.0.1:5000` e grava o banco em `data/siem.db`.
+## Licença
 
-3. Registre eventos de autenticação:
+Distribuído sob a licenca MIT. Consulte o arquivo `LICENSE` do repositorio.
 
-```bash
-curl -X POST http://127.0.0.1:5000/auth \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","ip":"10.0.0.1","success":false}'
-```
+## Autor
 
-4. Consulte alertas e eventos:
-
-```bash
-curl http://127.0.0.1:5000/alerts
-curl http://127.0.0.1:5000/events
-```
-
-5. Abra o dashboard:
-
-```text
-http://127.0.0.1:5000/dashboard
-```
-
-### Endpoints
-
-| Método | Caminho | Corpo | Retorna |
-|--------|---------|-------|---------|
-| POST | `/auth` | `{"username","ip","success"}` | status e alerta, se houver |
-| GET | `/alerts` | — | lista de alertas (mais recentes primeiro) |
-| GET | `/events` | — | últimos eventos de autenticação |
-| GET | `/dashboard` | — | dashboard em HTML |
-
-### Testes
-
-```bash
-uv run pytest -q
-```
-
-Resultado esperado: 8 passed. A suíte cobre o limiar de 10 falhas, 9 falhas sem alerta, 11 falhas com um único alerta, reset do contador após sucesso e separação por usuário/IP.
-
-### Licença
-
-MIT
-
-### Autor
-
-Kelvin Oliveira
-
----
-
-## English
-
-### Description
-
-`siem-luz-brute-force` is a minimal SIEM for brute force detection. It reads authentication events (username, IP, success/failure), stores them in SQLite, and raises an alert when the same (username, IP) pair accumulates 10 consecutive failures. A successful authentication resets the counter, so there is no re-alert while the same attack is ongoing. Includes a simple HTML dashboard and JSON endpoints for integration.
-
-### How to use
-
-1. Create the environment and install dependencies:
-
-```bash
-cd siem-luz-brute-force
-uv sync --dev
-```
-
-2. Start the server:
-
-```bash
-uv run siem-luz
-# or: uv run python -m siem_luz.app
-```
-
-The server listens on `http://127.0.0.1:5000` and writes the database to `data/siem.db`.
-
-3. Register authentication events:
-
-```bash
-curl -X POST http://127.0.0.1:5000/auth \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","ip":"10.0.0.1","success":false}'
-```
-
-4. Query alerts and events:
-
-```bash
-curl http://127.0.0.1:5000/alerts
-curl http://127.0.0.1:5000/events
-```
-
-5. Open the dashboard:
-
-```text
-http://127.0.0.1:5000/dashboard
-```
-
-### Endpoints
-
-| Method | Path | Body | Returns |
-|--------|------|------|---------|
-| POST | `/auth` | `{"username","ip","success"}` | status and alert, if any |
-| GET | `/alerts` | — | list of alerts (newest first) |
-| GET | `/events` | — | recent authentication events |
-| GET | `/dashboard` | — | HTML dashboard |
-
-### Tests
-
-```bash
-uv run pytest -q
-```
-
-Expected result: 8 passed. The suite covers the 10-failure threshold, 9 failures without alert, 11 failures with a single alert, counter reset after success, and per user/IP separation.
-
-### License
-
-MIT
-
-### Author
-
-Kelvin Oliveira
+Kelvin Oliveira, https://github.com/KelvinOliveiraCode
+Portfolio: https://kelvinoliveiracode.github.io/portfolio/
