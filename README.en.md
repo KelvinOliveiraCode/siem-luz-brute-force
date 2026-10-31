@@ -1,118 +1,105 @@
 # siem-luz-brute-force
 
-<div align="center">
-
 **English** · [Português (Brasil)](README.md)
 
-</div>
-
-[![Python 3](https://img.shields.io/badge/Python-3.x-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/) [![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikit-learn)](https://scikit-learn.org/) [![pandas](https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas)](https://pandas.pydata.org/) [![pytest](https://img.shields.io/badge/pytest-0A9EDC?style=flat-square&logo=pytest)](https://docs.pytest.org/) [![MIT License](https://img.shields.io/badge/License-MIT-f4c430?style=flat-square)](LICENSE)
-
-### Projeto funcional ,  siem-luz-brute-force
-
----
+[![Python 3](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](#) [![Flask](https://img.shields.io/badge/Flask-3-000000?style=flat-square&logo=flask)](#) [![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite)](#) [![pytest](https://img.shields.io/badge/pytest-8%20tests-0A9EDC?style=flat-square&logo=pytest)](#) [![MIT License](https://img.shields.io/badge/License-MIT-f4c430?style=flat-square)](LICENSE)
 
 ## What it is
 
-Projeto funcional ,  siem-luz-brute-force
+A **lightweight brute-force detection SIEM**: a detector that counts **consecutive login failures per (user, IP) pair** and raises an alert when the threshold is reached (default: **10 failures**). It includes a small **Flask** application with a dashboard to view events, alerts and authentications. Data is persisted in SQLite.
 
----
+## Status
 
-## Quick Start
+An educational security lab, working, with 8 tests.
 
-```bash
-# Clone and enter
-git clone https://github.com/KelvinOliveiraCode/<repo>.git
-cd <repo>
+> **Warning (verified by the agent):** the repository contains **committed duplicated structure** (`src/src/…` and `tests/tests/…`). Because of this, `pytest tests/` fails at collection ("import file mismatch"). The **8 tests pass** with `PYTHONPATH=src pytest tests/test_*.py`. See `HYGIENE.md`.
 
-# Install dependencies
-# No requirements.txt detected
+## Features
 
-# Run the project
-python main.py
+- **Brute-force detector** (`BruteForceDetector`): consecutive-failure threshold per (user, IP), with SQLite persistence.
+- **Flask application** with auth, alerts, events and dashboard routes.
+- **Web dashboard** showing the threshold, counters and event history.
+- **CLI**: `siem-luz` (configurable DB path via `--db`).
 
-# Run tests
-pytest
+## Architecture
+
+A `siem_luz` package with `detection.py` (business rule), `database.py` (SQLite persistence), `models.py` (data) and `app.py` (Flask + dashboard + CLI). The `process_event` pipeline updates the counter and raises an alert on threshold.
+
+```mermaid
+flowchart LR
+    REQ[Login request] --> D[BruteForceDetector.process_event]
+    D --> DB[(SQLite)]
+    D --> A{alert on threshold}
+    A --> APP[Flask - dashboard]
+    APP --> CLI[siem-luz]
 ```
 
-## How it works
+## Stack
 
-Estrutura limpa e modular com separação de responsabilidades.
+- Python ≥ 3.10
+- Flask ≥ 3.0
+- SQLite (stdlib `sqlite3`)
+- pytest (dev), ruff (dev)
 
----
+## Repository layout
 
-## Capabilities
+```
+siem-luz-brute-force/
+├── pyproject.toml · BRIEF.md
+├── src/siem_luz/
+│   ├── detection.py   # brute-force rule
+│   ├── database.py    # SQLite persistence
+│   ├── models.py
+│   └── app.py         # Flask + dashboard + CLI
+├── tests/             # test_app.py, test_detection.py
+├── (committed duplicates: src/src/…, tests/tests/…)  # see HYGIENE
+└── LICENSE            # MIT
+```
 
-| Capacidade | Descrição |
-|------------|-------------|
-| Carregamento de Dados | Auto-download do TensorFlow creditcard.csv (284k transações) com cache local |
-| EDA e Visualização | Distribuição de classes, histogramas de Amount, heatmaps de correlação (matplotlib/seaborn) |
-| Pré-processamento | RobustScaler em Amount/Time, split estratificado, remoção de duplicatas |
-| Balanceamento | SMOTE oversampling (fallback: class_weight="balanced") |
-| Modelagem | LogisticRegression, RandomForest, ExtraTrees com RandomizedSearchCV (StratifiedKFold) |
-| Métricas | Accuracy, Precision, Recall, F1, ROC AUC, Specificity, Confusion Matrix |
-| Seleção | Score ponderado: Recall 40% + F1 30% + Precision 20% + Accuracy 10% |
-| Persistência | Serialização joblib para modelo, scaler e resultados completos |
+## Prerequisites and installation
 
+Python ≥ 3.10.
 
----
+```bash
+pip install -e .
+```
 
+## How to run
 
+```bash
+siem-luz --db data/siem.db     # start the Flask application
+# open the dashboard at the printed address
+```
 
----
+## Tests and quality
 
-## FAQ
+Real run (verified by the agent):
 
-<details>
-<summary><strong>What is this project?</strong></summary>
+```bash
+PYTHONPATH=src python -m pytest tests/test_detection.py tests/test_app.py -q
+# 8 passed
+```
 
-A Python study/project demonstrating core concepts.
+> `pytest tests/` (without `PYTHONPATH`/with duplication) fails at collection — see Status above.
 
-</details>
+## Technical decisions and trade-offs
 
-<details>
-<summary><strong>How do I run it?</strong></summary>
+- **Per (user, IP) rule** instead of IP-only: avoids false positives on shared networks; on the flip side, a distributed attack across many IPs may not trigger.
+- **SQLite** for persistence: simple and local, right for a lab SIEM.
+- **Pragmatic detection** (consecutive-failure threshold) instead of ML: transparent and light.
 
-See [Quick Start](#quick-start) for copy-paste commands.
+## Known limitations and roadmap
 
-</details>
+- Simple in-memory/DB trend; no long history or correlation across multiple services.
+- The code is a lab; production would require auth hardening and centralized collection.
+- The duplicated folder structure needs cleanup for `pytest tests/` to work (a proposal in `HYGIENE.md`).
 
-<details>
-<summary><strong>Are there tests?</strong></summary>
+## Development process
 
-No automated tests in this repository.
+An individual project by Kelvin Oliveira, built with orchestrated AI agents and reviewed by the author. The detection rule, the dashboard and the review are the author's.
 
-</details>
+## License and author
 
-<details>
-<summary><strong>Can I use this in production?</strong></summary>
+MIT — Copyright (c) 2026 Kelvin Rebelo de Oliveira.
 
-This is a **study/portfolio project**. Review and harden (auth, persistence, monitoring, etc.) before production use.
-
-</details>
-
-
-
----
-
-## Documentation
-
-- **Source Code** ,  Browse the `src/` directory for implementation details
-- **API Reference** ,  Inline docstrings + type hints
-- **Architecture Diagram** ,  See [architecture.mermaid](docs/architecture.mermaid) (if present)
-- **Changelog** ,  [CHANGELOG.md](CHANGELOG.md) (if present)
-- **Contributing** ,  [CONTRIBUTING.md](CONTRIBUTING.md) (if present)
-
-## License
-
-[MIT](LICENSE) ,  Kelvin Oliveira
-
----
-
-<div align="center">
-
-**Built with** · Python 3 + scikit-learn + pandas
-
-**Author** · [Kelvin Oliveira](https://github.com/KelvinOliveiraCode) · [Portfolio](https://kelvinoliveiracode.github.io/portfolio/)
-
-</div>
+**Author**: [Kelvin Oliveira](https://github.com/KelvinOliveiraCode) · [Portfolio](https://kelvinoliveiracode.github.io/portfolio/)

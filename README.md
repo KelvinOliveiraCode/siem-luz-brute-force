@@ -1,118 +1,107 @@
 # siem-luz-brute-force
 
-<div align="center">
-
 [English](README.en.md) · **Português (Brasil)**
 
-</div>
-
-[![Python 3](https://img.shields.io/badge/Python-3.x-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/) [![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikit-learn)](https://scikit-learn.org/) [![pandas](https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas)](https://pandas.pydata.org/) [![pytest](https://img.shields.io/badge/pytest-0A9EDC?style=flat-square&logo=pytest)](https://docs.pytest.org/) [![MIT License](https://img.shields.io/badge/License-MIT-f4c430?style=flat-square)](LICENSE)
-
-### Projeto funcional ,  siem-luz-brute-force
-
----
+[![Python 3](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](#) [![Flask](https://img.shields.io/badge/Flask-3-000000?style=flat-square&logo=flask)](#) [![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite)](#) [![pytest](https://img.shields.io/badge/pytest-8%20testes-0A9EDC?style=flat-square&logo=pytest)](#) [![MIT License](https://img.shields.io/badge/License-MIT-f4c430?style=flat-square)](LICENSE)
 
 ## O que é
 
-Projeto funcional ,  siem-luz-brute-force
+**SIEM leve de detecção de brute force**: um detector que conta **falhas consecutivas de login por par (usuário, IP)** e dispara um alerta quando o limiar é atingido (padrão: **10 falhas**). Inclui uma pequena aplicação **Flask** com dashboard para visualizar eventos, alertas e autenticações. Dados persistidos em SQLite.
 
----
+## Status
 
-## Início Rápido
+Laboratório educacional de segurança, funcional, com 8 testes.
 
-```bash
-# Clone e entre
-git clone https://github.com/KelvinOliveiraCode/<repo>.git
-cd <repo>
+> **Aviso (verificado pelo agente):** o repositório contém **estrutura duplicada commitada** (`src/src/…` e `tests/tests/…`). Por isso `pytest tests/` falha na coleta ("import file mismatch"). Os **8 testes passam** com `PYTHONPATH=src pytest tests/test_*.py`. Ver `HYGIENE.md`.
 
-# Instale dependências
-# Nenhum requirements.txt detectado
+## Funcionalidades
 
-# Execute o projeto
-python main.py
+- **Detector de brute force** (`BruteForceDetector`): limiar de falhas consecutivas por (usuário, IP), com persistência SQLite.
+- **Aplicação Flask** com rotas de autenticação, alertas, eventos e dashboard.
+- **Dashboard** web mostrando limiar, contadores e histórico de eventos.
+- **CLI**: `siem-luz` (caminho do banco configurável via `--db`).
 
-# Execute os testes
-pytest
+> Descrição do GitHub diz "projeto funcional"; o código é um laboratório SIEM — documentado pelo que faz.
+
+## Arquitetura
+
+Pacote `siem_luz` com `detection.py` (regra de negócio), `database.py` (persistência SQLite), `models.py` (dados) e `app.py` (Flask + dashboard + CLI). Middleware `process_event` atualiza a contagem e emite alerta ao atingir o limiar.
+
+```mermaid
+flowchart LR
+    REQ[Requisição de login] --> D[BruteForceDetector.process_event]
+    D --> DB[(SQLite)]
+    D --> A{alertas ao atingir limiar}
+    A --> APP[Flask - dashboard]
+    APP --> CLI[siem-luz]
 ```
 
-## Como funciona
+## Stack
 
-Estrutura limpa e modular com separação de responsabilidades.
+- Python ≥ 3.10
+- Flask ≥ 3.0
+- SQLite (stdlib `sqlite3`)
+- pytest (dev), ruff (dev)
 
----
+## Estrutura do repositório
 
-## Capacidades
+```
+siem-luz-brute-force/
+├── pyproject.toml · BRIEF.md
+├── src/siem_luz/
+│   ├── detection.py   # regra de brute force
+│   ├── database.py    # persistência SQLite
+│   ├── models.py
+│   └── app.py         # Flask + dashboard + CLI
+├── tests/             # test_app.py, test_detection.py
+├── (duplicados commitados: src/src/…, tests/tests/…)  # ver HYGIENE
+└── LICENSE            # MIT
+```
 
-| Capacidade | Descrição |
-|------------|-------------|
-| Carregamento de Dados | Auto-download do TensorFlow creditcard.csv (284k transações) com cache local |
-| EDA e Visualização | Distribuição de classes, histogramas de Amount, heatmaps de correlação (matplotlib/seaborn) |
-| Pré-processamento | RobustScaler em Amount/Time, split estratificado, remoção de duplicatas |
-| Balanceamento | SMOTE oversampling (fallback: class_weight="balanced") |
-| Modelagem | LogisticRegression, RandomForest, ExtraTrees com RandomizedSearchCV (StratifiedKFold) |
-| Métricas | Accuracy, Precision, Recall, F1, ROC AUC, Specificity, Confusion Matrix |
-| Seleção | Score ponderado: Recall 40% + F1 30% + Precision 20% + Accuracy 10% |
-| Persistência | Serialização joblib para modelo, scaler e resultados completos |
+## Pré-requisitos e instalação
 
+Python ≥ 3.10.
 
----
+```bash
+pip install -e .
+```
 
+## Como executar
 
+```bash
+siem-luz --db data/siem.db     # sobe a aplicação Flask
+# acesse o dashboard no endereço exibido
+```
 
----
+## Testes e qualidade
 
-## Perguntas Frequentes
+Execução real (verificada pelo agente):
 
-<details>
-<summary><strong>O que é este projeto?</strong></summary>
+```bash
+PYTHONPATH=src python -m pytest tests/test_detection.py tests/test_app.py -q
+# 8 passed
+```
 
-Um estudo/projeto em Python demonstrando conceitos fundamentais.
+> `pytest tests/` (sem `PYTHONPATH`/com duplicação) falha na coleta — ver Status acima.
 
-</details>
+## Decisões técnicas e trade-offs
 
-<details>
-<summary><strong>Como executar?</strong></summary>
+- **Regra por pares (usuário, IP)** em vez de só IP: evita falsos positivos em redes compartilhadas; em troca, um ataque distribuído por muitos IPs pode não disparar.
+- **SQLite** para persistência: simples e local, adequado a um SIEM de laboratório.
+- **Detecção pragmática** (limiar de falhas consecutivas) em vez de ML: transparente e leve.
 
-Veja [Início Rápido](#início-rápido) para comandos copiáveis.
+## Limitações conhecidas e roadmap
 
-</details>
+- Monotónica em memória/banco simples; sem histórico longe nem correlação entre múltiplos serviços.
+- O código é um laboratório; produção exigiria hardening de auth e coleta centralizada.
+- A estrutura de pastas duplicada precisa de limpeza para `pytest tests/` funcionar (proposta em `HYGIENE.md`).
 
-<details>
-<summary><strong>Há testes?</strong></summary>
+## Processo de desenvolvimento
 
-Nenhum teste automatizado neste repositório.
+Projeto individual de Kelvin Oliveira, construído com agentes de IA orquestrados e revisado pelo autor. A regra de detecção, o dashboard e a revisão são do autor.
 
-</details>
+## Licença e autor
 
-<details>
-<summary><strong>Posso usar em produção?</strong></summary>
+MIT — Copyright (c) 2026 Kelvin Rebelo de Oliveira.
 
-Este é um **projeto de estudo/portfólio**. Revise e endureça (auth, persistência, monitoramento, etc.) antes de usar em produção.
-
-</details>
-
-
-
----
-
-## Documentação
-
-- **Código-Fonte** ,  Navegue pelo diretório `src/` para detalhes de implementação
-- **Referência da API** ,  Docstrings inline + type hints
-- **Diagrama de Arquitetura** ,  Veja [architecture.mermaid](docs/architecture.mermaid) (se presente)
-- **Changelog** ,  [CHANGELOG.md](CHANGELOG.md) (se presente)
-- **Contribuindo** ,  [CONTRIBUTING.md](CONTRIBUTING.md) (se presente)
-
-## Licença
-
-[MIT](LICENSE) ,  Kelvin Oliveira
-
----
-
-<div align="center">
-
-**Construído com** · Python 3 + scikit-learn + pandas
-
-**Autor** · [Kelvin Oliveira](https://github.com/KelvinOliveiraCode) · [Portfolio](https://kelvinoliveiracode.github.io/portfolio/)
-
-</div>
+**Autor**: [Kelvin Oliveira](https://github.com/KelvinOliveiraCode) · [Portfólio](https://kelvinoliveiracode.github.io/portfolio/)
